@@ -9,11 +9,40 @@ import { count } from "console";
 import axios from "axios";
 import PushNotifications from "@pusher/push-notifications-server";
 import { isUtf8 } from "buffer";
+import mongoose from "mongoose";
+import http from "http";
+
+mongoose.connect("mongodb://127.0.0.1:27017/TaskDB");
+
+const taskSchema = new mongoose.Schema({
+    _id:Number,
+    ip: String,
+    titleArr : Array,
+    currDateArr:Array,
+    currTimeArr: Array,
+    taskDescArr: Array,
+    taskSubArr: Array,
+    subTaskArr: Array,
+    subTaskCount: Number,
+    url: String,
+    today: Date,
+    firstname : String,
+    loginInfo: Array
+})
+
+const subTaskSchema = new mongoose.Schema({
+    _id: Number,
+    subTaskEntry : Array
+})
+
+const Task = mongoose.model("Task", taskSchema);
+const Sub_Task = mongoose.model("Sub_Task", subTaskSchema);
 
 const app = express();
 const port = 3000;
 const __dirname = dirname(fileURLToPath(import.meta.url));
-var addTask = [];
+var ip = "";
+var idCount = 0; var idforSubTask = 0;
 var newUserDB = []; 
 // Using API instead of this. ---- const date = new Date();const month = ["01","02","03","04","05","06","07","08","09","10","11","12"];let months = month[date.getMonth()];
 var dateviaAPI = "";var datetimeviaAPI="";var tempviaAPI="";var percpviaAPI="";var iconviaAPI=""; var iconAltTxtviaAPI = "";var weatherAPIerr ="";
@@ -57,9 +86,20 @@ var datadumpAuth = []; var fName = ""; var authErr = "";  var loginDB = [];var e
   }).catch((error) => {
     console.log('Error:', error);
   });*/
-  
+
+
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
+
+function requestListener(req, res, next) {
+    {
+    let forwarded = req.headers['x-forwarded-for']
+    ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress;
+    }
+    next()
+  }
+
+  app.use(requestListener);  
 
 // Weather API calling muddleware function
 async function weatherAPI (req,res,next){
@@ -285,35 +325,37 @@ app.get("/logout",(req,res)=>{
 // Retrieving stored state of tasks - task progress state,subtask checkbox state and subtask label state
 app.post("/checkbox-form", (req,res) => {
    // console.log(fs.readFileSync("tempprogDB.txt", 'utf8') === ""||JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"] == "")
-    var printable = "";
-
+   
     filterArr.push([(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]); 
-  // console.log("filterArr: "+ filterArr);
-    if (fs.readFileSync("tempprogDB.txt", 'utf8') === ""||JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"] == ""){
-    console.log("initialize")
-         datadump = [(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])];
-        fpop.push((datadump));
+    console.log("filterArr: "+ filterArr);
+     Sub_Task.find() 
+     .then ( (sub_task) => {  
+        console.log(sub_task);
+       if(sub_task == ""){
+         console.log("initialize");
+        const sub_Task = new Sub_Task ({
+            _id: idforSubTask,
+            subTaskEntry : [(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]
+        })
+        sub_Task.save();
+        idforSubTask++;
         
        // fpop = fpop.filter((e) => {
        //     return e != null;
        // });
 
         const data = {
-            storedData: fpop
+            storedData: Sub_Task.subTaskEntry
     } 
     res.render("taskrepository.ejs", data);   
-    fs.writeFile("tempProgDB.txt", JSON.stringify(data,null,2),'utf8', (err) => {
-    if (err) throw err;
-    }); 
-              
-   }
+    }
 
-   else{
+  else {
 
     var count = 0 ;  
     var counter = 0;
 
-        (JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]).forEach(element => {
+        sub_task.forEach(element => {
    
             console.log("element: "+ element);
  // -----------Loop ------1 
@@ -327,40 +369,32 @@ app.post("/checkbox-form", (req,res) => {
         (element)[2] !== (filterArr[filterArr.length-1])[2]) {
        
             console.log("loop2")
-     datadump = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"];
            
-    (JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]).forEach(item => {
-        
-    if (element[0] === item[0] & element[1] === item[1] & element[5] === item[5] & element[2] === item[2]){
-        datadump.splice(counter,1);
+    var index = sub_task.filter((item )=> {(element[0] === item[0] & element[1] === item[1] & element[5] === item[5] & element[2] === item[2])});
+        Sub_Task.deleteOne({_id : index});
+        const sub_Task = new Sub_Task ({
+            _id: idforSubTask,
+            subTaskEntry : [(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]
+        })
+        sub_Task.save();
+        idforSubTask++;
    //     console.log(datadump);
     }
-    
-    else{
-        counter ++ ;
-    }
-
-    fpop = datadump;
-   });
- 
-    printable = ((filterArr[filterArr.length-1]));
-        
-}
 
 // -----------Loop ------3 
 
 else{
-    
-    if (counter < 1){
         console.log("loop3")
-    printable = ((filterArr[filterArr.length-1]));
-}
+        const sub_Task = new Sub_Task ({
+            _id: idforSubTask,
+            subTaskEntry : [(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]
+        })        
+        sub_Task.save();
+        idforSubTask++;
 }       
- count = (JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]).length-1;
-         
 });
 
-fpop.push((printable));
+// fpop.push((printable));
 //console.log("fpop: " + printable)
 
 //fpop = fpop.filter((e) => {
@@ -368,30 +402,34 @@ fpop.push((printable));
 //});
 
 const data = {
-    storedData: fpop
+    storedData: Sub_Task.subTaskEntry
 } 
 
 res.render("taskrepository.ejs", data);
-fs.writeFile("tempProgDB.txt", JSON.stringify(data,null,2),'utf8', (err) => {
-if (err) throw err;
-}); 
 }
+})
+.catch ((err)=> {
+    console.log(err);
+});
 });
 
 // Task reporistory page -- All unregistered tasks are visible here
 app.get("/taskrepository", (req,res)=>{
     // task creating variables
     var checkedTasks=[];var num=""; var numArr = [];var title = [];var currDate = [];var currTime = [];var taskDesc = [];var subTask = [];var taskSubT = [];var len = "";
-
-    if (fs.readFileSync("tempTaskDB.txt", 'utf8')!= ""){
+    Task.find()
+    .then ((task)=> {
+    if (task != ""){
     console.log("repo")
-    var datadump = JSON.parse(fs.readFileSync("tempTaskDB.txt", 'utf8')); 
-    if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
+    
+    Sub_Task.find()
+    .then ((sub_task)=>{
+    if (sub_task != ""){
 
-        JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"].forEach(element =>{
+        sub_task.forEach(element =>{
             
-            if (element[5] === null){
-                checkedTasks.push(element);
+            if (element.subTaskEntry[5] === null){
+                checkedTasks.push(element.subTaskEntry);
                 //console.log(element);
             }
         });
@@ -402,10 +440,11 @@ app.get("/taskrepository", (req,res)=>{
         checkedTasks = ["","","","",""];
         console.log("error")
     }
+  
    if (fName === ""){
     fName = undefined;
    }
-(datadump.newTask).forEach(element => { 
+ task.forEach(element => { 
     if (element.loginInfo.emailAddress ===  undefined & emailAuth ===  undefined & element.loginInfo.password ===  undefined & passAuth ===  undefined ){
     numArr.push(element);
     num = numArr.length;
@@ -439,11 +478,15 @@ app.get("/taskrepository", (req,res)=>{
     }
  //   console.log(data);
     res.render("taskrepository.ejs", (data));
-    }
-    else {
-        console.log("Empty file");
+})
+.catch ((err)=>{
+ console.log(err);
+});}
+else {
+        console.log(err);
         res.render("addtask.ejs");
     }
+});
 });
 
 // task repository for registered user
@@ -585,7 +628,9 @@ app.get("/addTask", (req,res)=>{
 // Adds new task to the task repository
 app.post("/submit", (req,res)=>{
     
-    const newTask = {
+    const newTask = new Task({
+        _id: idCount, 
+        ip : ip,
         titleArr : req.body["taskTitle"],
         currDateArr:(req.body["taskDate"]),
         currTimeArr: (req.body["taskTime"]),
@@ -594,35 +639,13 @@ app.post("/submit", (req,res)=>{
         subTaskArr: (req.body["subtaskbox"]),
         subTaskCount: req.body["subtaskbox"].length,
         url: req.url,
-         today: dateviaAPI,
-         firstname : fName,
-         loginInfo: loginDB
-    };
-   addTask.push(newTask);
-    const data={
-       newTask: addTask
-     }
-    
-     if (fs.readFileSync("tempTaskDB.txt",'utf8') === "") {
-    fs.writeFile("tempTaskDB.txt", JSON.stringify(data,null,2),'utf8', (err) => {
-        if (err) throw err;
-        console.log('The earlier empty file has been saved!');
-      }); 
-    }
-    else{
-        var datadump =[];
-         datadump = (JSON.parse(fs.readFileSync("tempTaskDB.txt",'utf8')).newTask);
-        datadump.push(newTask);
-        const data={
-            newTask: datadump
-          }
-        fs.writeFile("tempTaskDB.txt", JSON.stringify(data,null,2),'utf8', (err) => {
-            if (err) throw err;
-            console.log('The earlier non-empty file has been updated with new task!');
-          }); 
-
-    }
-     res.render("addTask.ejs", {msg: "Task created successfully.", firstname: fName});
+        today: dateviaAPI,
+        firstname : fName,
+        loginInfo: loginDB
+    });
+    newTask.save();
+    idCount++;
+    res.render("addTask.ejs", {msg: "Task created successfully.", firstname: fName});
 });
 
 app.get("/editTask/:id", (req,res) => {
