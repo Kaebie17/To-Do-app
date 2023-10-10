@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
+    <link href="https://fonts.googleapis.com/css2?family=BioRhyme:wght@300;400;800&display=swap" rel="stylesheet">
+    <title>Amazing To-Do Application</title>
+</head>
+<body id="header">
+    <div class="header">    
+        <a href="/"><img src="assets/logo-stickynote.png" alt="Sticky-note"></a>
+         <h1>Amazing To-Do List Web App</h1>
+        <% if (locals.todopg || locals.clickcount || locals.url || locals.firstname) { %>
+             <a style="font-size: 2rem; text-decoration: none;" class="addTaskBtn" href="/addTask">➕</a>  
+            <% } %>
+              
+            <% if (locals.today) {%>
+            <output  class="cal-input"><a href="/today"><%= today %></a></output>
+            <% } %>
+            <% if (locals.localTime || locals.temperature || locals.humidity || locals.icons) {%>
+            <div class="weather-API">
+            <p><%= localTime %></p>
+            <p><%= temperature %>°C/<%= humidity %>%</p>
+            <img src="<%= icons %>" alt="<%= weather %>" width="40" height="40">
+                <% } %>
+                <% if (locals.firstname === undefined) {%>
+                    <span><a class="login" href="/login">Login</a></span>
+                    <% } %> 
+                    <% if (locals.firstname !== undefined) {%>
+                        <div class="dropdown">
+                            <a class=" dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <%= firstname %>
+                            </a>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="/usertaskrepository">See tasks</a></li>
+                              <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                              <li><a class="dropdown-item" href="#">Edit Tasks</a></li>
+                            </ul>
+                          </div>
+                          <span>/</span><span><a class="register" href="/logout">Logout</a></span>
+                    <% } %>
+            </div>
+            </div>
+         
+    <hr>
+        

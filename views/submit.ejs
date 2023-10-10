@@ -1,0 +1,151 @@
+<%- include("partials/header.ejs") %>
+
+<div class="todo-container">
+
+    <% if (locals.clickcount ) {%>
+        <% var j=0; %>
+        <% for(var i = 0 ; i < clickcount; i++){ %>
+            <% if (currDateArr[i] === today) {%>
+                <div>
+                    <div id="sticky-cover-<%= [i] %>" class="taskAttr-todo">
+                        <p class="closeAttrDiv"><a href="#sticky-cover-restore-<%= [i] %>">📌</a></p>
+                        <p class="firstAttr-todo"><strong><%= taskSubArr[i] %></strong></p>
+                        <p><%= taskDescArr[i] %></p><br>
+                        <% if (locals.subTaskArr) {%>
+                        <p><strong>Sub-Tasks-</strong></p>
+                        <% for(var j = 0 ; j < subTaskCount; j++){ %>  
+                        <p>
+                           <% if (subTaskArr[i][j] !== '') {%>
+                        <form action="/checkbox-form" method="post">
+                            <p id="label-p"> 
+                                <label id="sub-task-id-<%= i %>-<%= j %>" for="sub-task-box-<%= j %>" class="<% if (locals.inputfromDB){ inputfromDB.forEach(element => { if ((element)[1] === "checkbox-"+i+"-"+j) { %> <%-(element)[4] %> <%} }) }%>" >
+                                    <input id="checkbox-<%= i %>-<%= j %>"  type="checkbox" name="sub-task-box-<%= j %>" onclick=' $("#sub-task-id-<%= i %>-<%= j %>").toggleClass("strikethrough");const taskProgress = new Progress("<%= i %>"); $("#progress-bar<%=i%>").css("width", taskProgress["funcInstance<%= i %>"](event, "<%= i %>" )); store(event,"<%= i %>","<%= j %>",newWidth,$("#sub-task-id-<%= i %>-<%= j %>").attr("class"), check(event));' <%if (locals.inputfromDB){ inputfromDB.forEach(element => { if ((element)[1] === "checkbox-"+i+"-"+j) {%><%= (element)[2] %><% } }) }%> > <%=subTaskArr[i][j] %>
+                                </label>
+                            </p>
+                        </form>
+                         </p>
+                         <% } %>
+                         <% } %>
+                         <% } %>
+                    </div>
+                    <img src="assets/sticky-note.jpg" alt="">
+                    <h4><%= titleArr[i] %></h4>
+                    <p><%= currDateArr[i] %> <%= currTimeArr[i] %> hrs</p>
+                    <p class="removecover"><a href="#sticky-cover-<%= [i] %>" id="removecover-<%= [i] %>" onclick="event;">📌</a></p>
+                    <p class="editIcon"><a id="editTask-<%= [i] %>" data-bs-toggle="modal" href="#exampleModal" onclick="var document = ($(event.target)[0]).ownerDocument; document.getElementById('exampleModal').classList.add('<%- i %>'); console.log(`<%-subTaskArr[i].filter(element => element !== '')%>`)  ;update('<%- i %>','<%-titleArr[ i] %>','<%-currDateArr[ i] %>','<%-currTimeArr[ i] %>','<%-taskSubArr[ i] %>','<%-taskDescArr[ i] %>','<%-subTaskArr[i][0]%>','<%-subTaskArr[i][1]%>','<%-subTaskArr[i][2]%>','<%-subTaskArr[i][3]%>','<%-subTaskArr[i][4]%>','<%-subTaskArr[i][5]%>','<%-subTaskArr[i][6]%>','<%-subTaskArr[i][7]%>','<%-subTaskArr[i][8]%>','<%-subTaskArr[i][9]%>')">📝</a></p>
+                    <%- include("partials/editTaskModal.ejs") %>
+                    <h5>Progress:</h5>
+                    <div id="maximum-width" class="progress" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+                        
+                        <div class="progress-bar progress-bar-striped progress-bar-animated progress-status"  id="progress-bar<%=i%>" <% /* eslint-disable css-propertyvalueexpected */ %> style = "width :  <% if (locals.inputfromDB){ var w = 0 ; var sameBar = []; var sameBarTasks = [] ; for (var c = 0; c < inputfromDB.length; c++){if (parseFloat((inputfromDB[c])[0])===i & (inputfromDB[c])[4] === "strikethrough") { sameBar.push(inputfromDB[c]);}}; for (var d = 0; d < subTaskCount; d++) { if (((subTaskArr[i])[d]) != "") { sameBarTasks.push((subTaskArr[i])[d]);} }; w = sameBar.length*(182.938/sameBarTasks.length);%> <%- w+"px" %> <% } else {%> 0px <% } %>";></div>
+                    </div>
+                </div>
+            <% } %>    
+        <% } %>
+   
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+<script> 
+
+     var i = "";
+     var clicks = {};
+     clicks[i] = [];
+
+     function update(id,title,date,time,subtitle,description,subtasks0,subtasks1,subtasks2,subtasks3,subtasks4,subtasks5,subtasks6,subtasks7,subtasks8,subtasks9){
+    response = [subtasks0,subtasks1,subtasks2,subtasks3,subtasks4,subtasks5,subtasks6,subtasks7,subtasks8,subtasks9];
+     const exampleModal = document.getElementById('exampleModal');
+     console.log(response);
+     // If necessary, you could initiate an Ajax request here
+    // and then do the updating in a callback.
+
+    // Update the modal's content.
+   // const modalTitle = exampleModal.querySelector('.modal-title') 
+     exampleModal.querySelector('#idTask').value =  title+subtitle+description+date+time+response ;
+     exampleModal.querySelector('#taskNum').value =  id;
+     exampleModal.querySelector('#taskTitle').value =  title;
+     exampleModal.querySelector('#taskSub').value = subtitle;
+     exampleModal.querySelector('#taskDesc').value = description; 
+     exampleModal.querySelector('#taskDate').value = date;
+     exampleModal.querySelector('#taskTime').value = time;
+     var my_subtask = [];
+     for (var i = 0; i < 10; i++){
+     my_subtask.push(`#subT-${i}`);
+    }
+    for (var i = 1; i <= 10; i++){
+        exampleModal.querySelector(`#subT-${i}`).value = response[i-1] ;
+       }
+}
+
+
+  function taskpointer(event){
+
+    // console.log($($(event).attr("href")).children("form").children("p#label-p").children("label").children("input"));
+        var i = $(event).attr("id").replace("removecover-","");
+        var progwidth = "";
+        var subTaskArr = [];
+        var initialwidth = $("#progress-bar"+i).width();
+        var subTaskArLen = $($(event).attr("href")).children("form").children("p#label-p").length ;
+        progwidth = (parseFloat($("#maximum-width").width())/subTaskArLen) ;
+        return [initialwidth,progwidth];
+    };
+    
+    function Progress(i){ 
+
+        this.i = i;
+        this["funcInstance" + this.i] = function (e,i) { 
+        const [initialwidth, progwidth] =   taskpointer($("#removecover-"+ i)); 
+        if($(e.target).is(":checked")===true)
+            if (clicks[i] === undefined ){
+            {clicks[i] = ["clicked"];}
+            }
+            else{
+                clicks[i].push("clicked")
+            }
+        else {
+            if (clicks[i] === undefined ){
+            {clicks[i] = [];}
+            }
+            clicks[i].pop("clicked");
+        }
+
+        if  ($(e.target).is(":checked")!==true){
+           newWidth = (parseFloat(initialwidth)-parseFloat(progwidth));
+          }
+        else{
+          newWidth = (parseFloat(initialwidth)+parseFloat(progwidth));
+         };
+   
+        return newWidth;
+          };   
+}
+
+function check(e){
+    
+   // console.log($(e.target).is(":checked"));
+    if ($(e.target).is(":checked")=== true){
+        return "checked";
+    }
+    else {
+        return "" ;
+    }
+}
+
+function store(event,i,j, barWidth,labelCSS,checkState){
+       
+       outputforDB = []; 
+  idArray = $(($("#removecover-"+ i)).attr("href")).children("form").children("p#label-p").children("label").children("input");
+
+  if ($(idArray[j]).attr("id") === $(event.target).attr("id")) {    
+    outputforDB.push([i,$(idArray[j]).attr("id"),barWidth,labelCSS,checkState,'<%- loginInfo.emailAddress %>']);
+   // console.log(outputforDB);
+}
+    const data = {
+       inputonLoad: outputforDB 
+    }
+
+    $.post("/checkbox-form",data)
+}
+
+</script>
+
+<%- include("partials/footer.ejs") %>

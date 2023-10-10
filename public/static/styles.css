@@ -1,0 +1,410 @@
+*{
+    margin: 0;
+}
+a{
+    text-decoration: none !important;
+}
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    padding-top: 2vh;
+    
+}
+
+.header> a > img{
+    width: 50px;
+    height: 50px;
+    margin-left: 1vw;
+    margin-right: 1vw;
+    rotate: -10deg;
+}
+
+.header > h1{
+    width: 85%;
+    margin:0;
+    font-size: 2.5rem;
+    font-family: 'BioRhyme', serif;
+    font-weight: 800;
+}
+#header > hr{
+    border-width: 3px;
+    border-color: black;
+    border-style: solid;
+    margin-left: 12vw;
+}
+.weather-API{
+    margin-right: 10px;
+    width: 20%;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    font-family: 'BioRhyme', serif;
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: #3586ff;
+  }
+  .weather-API > p {
+    margin: 0;
+  }
+#header >.header > .cal-input{
+   padding:  0.2% 0.5% 0;
+   width: 7%;
+   font-family: 'BioRhyme', serif;
+    font-weight: 400;
+font-size: 0.75rem;
+}
+.header> span > .login{
+    margin-left: 1vw;
+}
+
+#footer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#footer > h3,p {
+    margin-top: 1vh;
+    margin-bottom: 0;
+    z-index: 1;
+}
+/*wave and animation*/
+#footer {
+    position: relative;
+  width: 100%;
+  top: 56px;
+  background: #3586ff;
+  height: 65px;
+
+    }
+#footer> .wave {
+    position: absolute;
+  top: -50px;
+  left: 0;
+  width: 100%;
+  height: 50px;
+    background: url("/assets/wave.png");
+    background-size: 1000px 50px;
+  }
+  
+ #footer> #wave1 {
+    z-index: 1000;
+    opacity: 1;
+    bottom: 0;
+    animation: animateWave 4s linear infinite;
+  }
+  
+  #footer> #wave2 {
+    z-index: 999;
+    opacity: 0.5;
+    bottom: 10px;
+    animation: animateWave_02 4s linear infinite;
+  }
+  #footer> #wave3 {
+    z-index: 1000;
+    opacity: 0.2;
+    bottom: 0;
+    animation: animateWave 3s linear infinite;
+  }
+  
+  #footer> #wave4 {
+    z-index: 999;
+    opacity: 0.7;
+    bottom: 20px;
+    animation: animateWave_02 3s linear infinite;
+  }
+  
+  @keyframes animateWave {
+    0% {
+      background-position-x: 1000px;
+    }
+    100% {
+      background-position-x: 0px;
+    }
+  }
+  
+  @keyframes animateWave_02 {
+    0% {
+      background-position-x: 0px;
+    }
+    100% {
+      background-position-x: 1000px;
+    }
+  }
+  
+  .landing{
+    height: 69.75vh;
+    width: 100%;
+    display: flex;
+    justify-content: end;
+}
+
+.landing > .content-landing {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 8vh;
+    align-items: center;
+}
+.landing > .content-landing > h1 {
+    font-size: 4rem;
+    font-family: 'BioRhyme', serif;
+    font-weight: 400;
+}
+.landing > .content-landing > p {
+    padding: 5vh 9vw;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+}
+.landing > .landing-sticky {
+    width: 60%;
+    display: grid;
+}
+.landing >.landing-sticky>img{
+    grid-area: 1/1/1/1;
+    width: 40vw;
+    height: 60vh;
+    margin-right: 2vw;
+}
+.landing >.landing-sticky>h3{
+    grid-area: 1/1/1/1;
+    z-index: 0;
+    margin-top: 10vh ;
+    text-align: center;
+    font-family: 'BioRhyme', serif;
+    font-weight: 400;
+    font-size: 1rem;
+}
+.landing >.landing-sticky>hr{
+    border-style: solid;
+    border-color: black;
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    margin: 15vh 7vw 0 5vw ;
+}
+.landing >.landing-sticky>p{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    margin: 14vh 0 0 15.5vw ;
+    width: fit-content;
+    height: fit-content;
+    background-color: white;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+    padding: 0 2vw;
+    font-size: 0.75rem;
+}
+.landing >.landing-sticky>button{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    width: fit-content;
+    height: fit-content;
+    margin: 18vh 0 0 16vw ;
+    font-size: 0.75rem;
+}
+.landing >.landing-sticky>.signup-form{
+    height: 25vh;
+    width: 30vw;
+    margin-left: 5vw;
+    margin-top: 24vh;
+    grid-area: 1/1/1/1;
+    z-index: 0;
+}
+.landing >.landing-sticky>.signup-form>p{
+    text-align: center;
+    margin: 1.5vh;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+    font-size: 0.75rem;
+}
+
+.modal{
+    overflow: hidden !important;
+    margin-top: 0 !important;
+    z-index: 10001 !important;
+}
+
+.todo-container{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: start;
+    gap:0.5vw;
+    height: 69.9vh;
+    overflow: scroll;
+    padding-left: 1vh;
+}
+.todo-container > div{
+    width: 33vh;
+    height: 40vh;
+    display: grid;
+}
+.todo-container > div > img{
+    grid-area: 1/1/1/1;
+    width: 100%;
+    height: 100%;
+}
+.todo-container > div > h4{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    text-align: center;
+    margin-top: 6vh;
+    text-transform: capitalize;
+    text-decoration: underline;
+    font-family: 'BioRhyme', serif;
+    font-weight: 400;
+}
+.todo-container > div > p{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    text-align: center;
+    margin-top: 16vh;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+}
+.todo-container > div > .removecover{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    text-align: right;
+    margin-top: 1vh;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+}
+.todo-container > div > .editIcon{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    text-align: left;
+    align-self: end;
+    margin: 0;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+}
+.todo-container > div > h5{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    text-align: center;
+    margin-top: 22vh;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+}
+.todo-container > div > div{
+    grid-area: 1/1/1/1;
+    z-index: 1;
+    text-align: left;
+    width: 75%;
+    margin: 28vh auto 0;
+}
+.display{
+    display: none;
+}
+.todo-container > div> .taskAttr-todo {
+    grid-area: 1/1/1/1;
+    z-index: 2;
+    display: none;
+    margin: 0;
+    width: 100%;
+    text-align: left;
+    overflow: scroll;
+}
+.todo-container > div> .taskAttr-todo[id ^= "sticky-cover"]:target{
+    display: flex;
+    flex-direction: column;
+    background-color: beige;
+    border-radius: 10%;
+}
+.todo-container > div> .taskAttr-todo > p {
+    margin: 1% 1% 0 5%;
+    width: 50vh;
+    font-family: 'BioRhyme', serif;
+    font-weight: 300;
+    margin: 0;
+}
+.todo-container > div> .taskAttr-todo > .closeAttrDiv {
+    align-self: end;
+    margin: 0;
+    font-weight: 900;
+    rotate: 180deg;   
+}
+.todo-container > div> .closeAttrDiv > div[id ^= "sticky-cover"]:target{
+    animation: sticky-cover 1s ease-in-out 1 forwards;
+}
+@keyframes sticky-cover{
+    0%{
+        display: inherit;
+    }
+    100%{
+        display: none;  
+    }
+}
+.addTask-form{
+    display: flex;
+    height: 69.9vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    margin: 5% 0 0 0;
+}
+.strikethrough{
+    text-decoration:line-through;
+}
+.loginpage{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap:0.5vw;
+    height: 69.9vh;
+    padding-left: 1vh;
+}
+.loginpage>.form>form{
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+}
+.loginpage>.form>form>#submit{
+    width: 20%;
+    align-self: center;
+}
+.profile{
+    height: 49.5vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1vh;
+}
+.profile > span{
+    display: flex;
+    gap: 5vw;
+    justify-content: space-between;
+    align-items: center;
+    width: 25vw;
+    }
+    .profile > span> input{
+        justify-self: end;
+    }
+    .profile > span> label{
+        margin-top: 1vh;
+    }
+    .profile > a {
+        font-size: 1vh;
+        position: relative;
+        left: 10vw;
+        bottom: 1vh;
+
+    }
+    .profileImg{
+        height: 20vh;
+        width: 10vw;
+        border-radius: 50%;
+        position: relative;
+        left: 45%;
+    }
+    .userexists{
+        height: 68.75vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: red;
+    }

@@ -1,0 +1,16 @@
+<%- include("partials/header.ejs") %>
+
+<div class="loginpage">
+    <div class="form">
+        <form action="/login" method="post">
+        <input type="text" name="emailAuth" id="emailAuth" placeholder="Enter your registered email" size="70">
+        <input type="password" name="passAuth" id="passAuth" placeholder="Enter your password" size="70">
+        <input type="submit" name="submit" value="Submit" id="submit">
+        </form>
+        <% if (locals.authErr) {%>
+            <p style="margin-top:2vh ; text-align: center; color: red;"><%= authErr %></p>
+            <% } %>
+    </div>
+</div>
+
+<%- include("partials/footer.ejs") %>

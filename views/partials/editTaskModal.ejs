@@ -1,0 +1,40 @@
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+             <div class="modal-content">
+                <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Update task attributes</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                    <div class="modal-body">
+    
+                            <form  class="addTask-form" method="post">
+                                <input type="hidden" name="id" id="idTask">
+                                <input type="hidden" name="taskNum" id="taskNum">
+                                    <input type="text" id="taskTitle" name="taskTitle" placeholder="Enter task title" size="50">
+                                
+                                
+                                    <input type="text" id="taskSub" name="taskSub" placeholder="Enter task sub-title" size="50">
+                                
+                                
+                                    <input type="textarea" id="taskDesc" name="taskDesc" placeholder="Give a brief description" size="50">
+                                
+                            <% for (var i=1; i <= 10; i++) { %>
+                                    <input type="text" size="50" id="subT-<%=i %>" name="subTask" placeholder="Add your sub-task"> 
+                                <% } %>
+                        
+                               <input type="date" id="taskDate" name="taskDate">
+                    
+                    
+                              <input type="time" id="taskTime" name="taskTime"> 
+                     </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="const document = $(event.target.ownerDocument)[0]; var id = document.getElementById('exampleModal').classList[2];console.log(id); window.location.href = `/editTask/${id}` ; document.getElementById('exampleModal').classList.remove(id);console.log(document.getElementById('exampleModal').classList)">Delete Task</button>
+                    <button type="submit" class="btn btn-primary" formaction="/updateTask">Update</button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>    
+      

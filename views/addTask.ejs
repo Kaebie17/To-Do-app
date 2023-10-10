@@ -1,0 +1,28 @@
+<%- include("partials/header.ejs") %>
+<% if (locals.msg) {%>
+   <h5 style="color: green;text-align: center; font-family: cursive;"> <%= msg %> </h5>
+    <% } %>
+<form  class="addTask-form" action="/submit" method="post">
+    <div>
+        <input type="text" name="taskTitle" placeholder="Enter task title" size="100">
+    </div>
+    <div>
+        <input type="text" name="taskSub" placeholder="Enter task sub-title" size="100">
+    </div>
+    <div>
+        <input type="textarea" name="taskDesc" placeholder="Give a brief description" size="100">
+    </div>
+            <% for (var i=1; i <= 10; i++) { %>
+                    <input type="text" size="100" id="subT-<%=i %>" name="subtaskbox" placeholder="Add your sub-task"> 
+                <% } %>
+    <div>     
+        <input type="date" name="taskDate">
+    </div>
+    <div>
+        <input type="time" name="taskTime"> 
+    </div>
+    
+    <input type="submit" name="submit">
+</form>
+
+<%- include("partials/footer.ejs") %>
