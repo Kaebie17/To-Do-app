@@ -15,7 +15,23 @@ import http from "http";
 mongoose.connect("mongodb://127.0.0.1:27017/TaskDB");
 
 const taskSchema = new mongoose.Schema({
-    _id:Number,
+    user_id:Number,
+    ip: String,
+    titleArr : Array,
+    currDateArr:Array,
+    currTimeArr: Array,
+    taskDescArr: Array,
+    taskSubArr: Array,
+    subTaskArr: Array,
+    subTaskCount: Number,
+    url: String,
+    today: Date,
+    firstname : String,
+    loginInfo: Array
+})
+
+const usertaskSchema = new mongoose.Schema({
+    user_id:Number,
     ip: String,
     titleArr : Array,
     currDateArr:Array,
@@ -31,26 +47,31 @@ const taskSchema = new mongoose.Schema({
 })
 
 const subTaskSchema = new mongoose.Schema({
-    _id: Number,
+    user_id: Number,
+    reg_user: Boolean,
     subTaskEntry : Array
 })
 
+const addUserSchema = new mongoose.Schema({
+    firstname: String,
+    lastname: String,
+    emailAddress: String,
+    password: String,
+    mobileNumber: Number,
+})
+
 const Task = mongoose.model("Task", taskSchema);
+const userTask = mongoose.model("userTask", usertaskSchema);
 const Sub_Task = mongoose.model("Sub_Task", subTaskSchema);
+const newUser = mongoose.model("newUser", addUserSchema);
 
 const app = express();
 const port = 3000;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 var ip = "";
-var idCount = 0; var idforSubTask = 0;
 var newUserDB = []; 
 // Using API instead of this. ---- const date = new Date();const month = ["01","02","03","04","05","06","07","08","09","10","11","12"];let months = month[date.getMonth()];
 var dateviaAPI = "";var datetimeviaAPI="";var tempviaAPI="";var percpviaAPI="";var iconviaAPI=""; var iconAltTxtviaAPI = "";var weatherAPIerr ="";
-
-// variables used in progress retreival
-var fpop = [];var filterArr = [];
-//readfile variable
-var datadump = [];
 //weather API credentials
 const API_URL_Weather = 'http://api.weatherstack.com/current';
 //const weatherKey = JSON.parse(fs.readFileSync("secrets.txt", 'utf8')).weatherKey;
@@ -119,32 +140,28 @@ async function weatherAPI (req,res,next){
 }
 
 //local auth middleware
-function localAuthentication (req,res,next) { 
-    if (existsSync(__dirname + '/regUser.txt')=== false){
+async function localAuthentication (req,res,next) { 
+    await newUser.find()
+    .then ((user)=> {
+    
+    if (user.length === 0){
         console.log ("User not found");
     }
     else{
-        if (fs.readFileSync("regUser.txt", 'utf8')!= ""){       
-            datadumpAuth = (JSON.parse(fs.readFileSync("regUser.txt", 'utf8')));
-          //  console.log(datadumpAuth);
+            datadumpAuth = user ;
+          //      console.log(datadumpAuth);
             if (req.body["emailAuth"] !== undefined & req.body["passAuth"] !== undefined){
-                    
             emailAuth=(req.body["emailAuth"]);
             passAuth=(req.body["passAuth"]);
         }
-          ///  console.log(emailAuth+"fff");
-            for (var i=0; i< datadumpAuth.length; i++){
+          for (var i=0; i< datadumpAuth.length; i++){
                 if (emailAuth === datadumpAuth[i].emailAddress & passAuth === datadumpAuth[i].password){
                     loginDB = (datadumpAuth[i]);
                     fName = datadumpAuth[i].firstname;
-                    console.log(fName+"0");
+             }
             }
-            }
     }
-    else{
-        console.log ("User not found");
-    }
-    }
+    })
     next()
     }
 
@@ -152,53 +169,64 @@ app.use(weatherAPI);
 
 // Register user
 app.post("/", (req,res)=>{
-    console.log(newUserDB[0]);
-    const newUser={
-         firstname: req.body["fName"],
-         lastname: req.body["lName"],
-         emailAddress: req.body["emailaddr"],
-         password: req.body["password"],
-         mobileNumber: req.body["mobile"]
-     }
-     if (newUserDB[0] === undefined){
-        newUserDB.push(newUser);
-        console.log("added new");
+    
+     newUser.find()
+     .then ((user)=>{
+        var count = 0;
+        var addedUser = [];
+       if (user.length === 0){
+        console.log("First user")
+        const new_user = new newUser({
+            firstname: req.body["fName"],
+            lastname: req.body["lName"],
+            emailAddress: req.body["emailaddr"],
+            password: req.body["password"],
+            mobileNumber: req.body["mobile"]
+        });
+        new_user.save();
+        addedUser = new_user;
+        count++;
      }
      else{
-     for (var i=0; i<newUserDB.length; i++){
-        if(newUserDB[i].emailAddress !== req.body["emailaddr"] & newUserDB[i].mobileNumber !== req.body["mobile"] ) {
-            newUserDB.push(newUser);
+
+            user.forEach((elem) => {
+                if(elem.emailAddress !== req.body["emailaddr"] & elem.mobileNumber !== req.body["mobile"] ) {
+                    const new_user = newUser({
+                    firstname: req.body["fName"],
+                    lastname: req.body["lName"],
+                    emailAddress: req.body["emailaddr"],
+                    password: req.body["password"],
+                    mobileNumber: req.body["mobile"]
+            });
+            new_user.save();
             console.log("added next");
+            addedUser = new_user;
+            count++;
         }
-        else{
-            var errmsg = "User already exists."; 
-            console.log("add fail");  
-        }
+        
+    });
     }
-    }
-     const data = {
-        regUser: newUser,
-        userexists: errmsg 
+   
+    console.log(count);
+    const data = {
+        regUser: addedUser,
+        userexists: "User already exists.", 
+        myCount: count
      }
-     fs.writeFile("regUser.txt",JSON.stringify(newUserDB,null,2), 'utf8', (err) => {
-         if (err) throw err;
-         }); 
          console.log(req.url);
      res.render("profilepage.ejs",data)
- });
+    })
+});
+
 
  //Home page
 app.get("/", (req,res)=>{
+
     try{
-        if (existsSync(__dirname + '/tempTaskDB.txt')=== false){
-            console.log('The path is created.');
-           fs.writeFile("tempTaskDB.txt", "",'utf8', (err) => {
-               if (err) throw err;
-           }); 
-           }
            fName = undefined;
            emailAuth = undefined;
            passAuth = undefined;
+           console.log(fName+" "+emailAuth+" "+passAuth);
     const data = {
         localTime: datetimeviaAPI, 
         temperature: tempviaAPI, 
@@ -216,82 +244,36 @@ app.get("/", (req,res)=>{
 
 // Load login page
 app.get("/login", (req,res)=>{
-    console.log(emailAuth);
-    console.log(passAuth);
+    fName = undefined;
+           emailAuth = undefined;
+           passAuth = undefined;
+           console.log(fName+" "+emailAuth+" "+passAuth);
     res.render("login.ejs");
 });
 
 app.use(localAuthentication);
 
 // Authorize login attempt
-app.post("/login", (req,res)=>{
-
+app.post("/login", async(req,res)=>{
     if (datadumpAuth != ""){
-        console.log(fName+"~~");
-        if (fName !== undefined){
+        if (fName != undefined){
 // task creating variables
-var checkedTasks=[];var num=""; var numArr = [];var title = [];var currDate = [];var currTime = [];var taskDesc = [];var subTask = [];var taskSubT = [];var len = "";
+var checkedTasks=[];
 
-    if (fs.readFileSync("tempTaskDB.txt", 'utf8')!= ""){
-        console.log("repo")
-        var datadump = JSON.parse(fs.readFileSync("tempTaskDB.txt", 'utf8')); 
-        if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
-            JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"].forEach(element =>{
-                if (element[5] === emailAuth){
-                    checkedTasks.push(element);
-                }
+userTask.find()
+.then ((task)=> {
+if (task != ""){
 
-            });
-    
-        }
-        else{
-            checkedTasks = ["","","","",""];
-            console.log("error")
-        }
-      
-    (datadump.newTask).forEach(element => {  
-        if (element.loginInfo.emailAddress === emailAuth & element.loginInfo.password === passAuth){
-        numArr.push(element);
-        num = numArr.length;
-        title.push(element.titleArr);
-        currDate.push(element.currDateArr);
-        currTime.push(element.currTimeArr) ; 
-        taskDesc.push(element.taskDescArr);
-        taskSubT.push(element.taskSubArr);
-        subTask.push(element.subTaskArr);
-        len = element.subTaskCount;
-        }
-        console.log(passAuth);
-        console.log(element.loginInfo.password);
-    });
-    
-    const data={
-            dir : __dirname,
-            clickcount: num,
-            titleArr: title,
-            currDateArr: currDate,
-            currTimeArr: currTime, 
-            taskDescArr: taskDesc,
-            taskSubArr: taskSubT,
-            subTaskArr: subTask,
-            subTaskCount: len,
-            url: req.url,
-            todopg: true,
-            today: dateviaAPI,
-            inputfromDB: checkedTasks,
-            firstname : fName,
-            loginInfo: loginDB
-        }
-      //  console.log(data);
-    
-            res.render("usertaskrepository.ejs", data);
+
+            res.redirect("/usertaskrepository");
+
     }
     else {
         console.log("Empty file");
-        console.log(fs.readFileSync("tempTaskDB.txt", 'utf8'))
         res.render("addtask.ejs");
     }
-}
+})
+ }
 else{
     console.log("visited");
     res.render("login.ejs", {authErr: "Incorrect username or password"});
@@ -304,7 +286,7 @@ res.render("login.ejs",{authErr: "User not found"});
 });
 
 app.get("/profile", (req,res) => {
-    res.render("profilepage.ejs", {regUser: loginDB, firstname: fName})
+    res.render("profilepage.ejs", {regUser: loginDB, firstname: fName, myCount: 1})
 });
 
 app.get("/logout",(req,res)=>{
@@ -325,74 +307,84 @@ app.get("/logout",(req,res)=>{
 // Retrieving stored state of tasks - task progress state,subtask checkbox state and subtask label state
 app.post("/checkbox-form", (req,res) => {
    // console.log(fs.readFileSync("tempprogDB.txt", 'utf8') === ""||JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"] == "")
-   
+   const filterArr = [];    
+   var cnt = 0 ;
+   var user_bool = "";
+   if (fName == undefined){
+    user_bool = false;
+    filterArr.push([(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],""]);   
+}
+  else{
+    user_bool = true;
     filterArr.push([(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]); 
+  }
     console.log("filterArr: "+ filterArr);
      Sub_Task.find() 
-     .then ( (sub_task) => {  
-        console.log(sub_task);
+     .then ( async(sub_task) => {  
+       console.log(fName);
+      console.log(user_bool);
        if(sub_task == ""){
          console.log("initialize");
+         const count = await (Sub_Task.countDocuments({}));
         const sub_Task = new Sub_Task ({
-            _id: idforSubTask,
-            subTaskEntry : [(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]
+            user_id: count ,
+            reg_user: user_bool,
+            subTaskEntry : ((filterArr[filterArr.length-1]))
         })
+
         sub_Task.save();
-        idforSubTask++;
+        
         
        // fpop = fpop.filter((e) => {
        //     return e != null;
-       // });
-
-        const data = {
-            storedData: Sub_Task.subTaskEntry
-    } 
-    res.render("taskrepository.ejs", data);   
+       // }); 
     }
 
-  else {
+   if (sub_task != ""){
+    sub_task.forEach(async(element) => { 
+       cnt++;
+    if ((filterArr[filterArr.length-1])[2] != "") {
+    const count = await (Sub_Task.countDocuments({}));
+    console.log(cnt);
+    const sub_Task = new Sub_Task ({
+        user_id: count,
+        reg_user: user_bool,
+        subTaskEntry : ((filterArr[filterArr.length-1]))
+    })   
 
-    var count = 0 ;  
-    var counter = 0;
+    if  ( cnt === sub_task.length && element.user_id != count ) {
+        cnt++;
+        sub_Task.save();
+    }
+}
+});
+}  
 
-        sub_task.forEach(element => {
-   
-            console.log("element: "+ element);
- // -----------Loop ------1 
- 
-  
+if (sub_task != "")  { 
+    
+        sub_task.forEach(async(element) => {
+
+ // -----------Loop ------1
 // -----------Loop ------2 
  
- if ((element)[0] === (filterArr[filterArr.length-1])[0] & 
-       (element)[1] === (filterArr[filterArr.length-1])[1] &
-       (element)[5] === (filterArr[filterArr.length-1])[5] &
-        (element)[2] !== (filterArr[filterArr.length-1])[2]) {
+ if ((element.subTaskEntry)[0] === (filterArr[filterArr.length-1])[0] & 
+       (element.subTaskEntry)[1] === (filterArr[filterArr.length-1])[1] &
+       (element.subTaskEntry)[5] === (filterArr[filterArr.length-1])[5] &
+        (element.subTaskEntry)[2] !== (filterArr[filterArr.length-1])[2]) {
        
             console.log("loop2")
-           
-    var index = sub_task.filter((item )=> {(element[0] === item[0] & element[1] === item[1] & element[5] === item[5] & element[2] === item[2])});
-        Sub_Task.deleteOne({_id : index});
-        const sub_Task = new Sub_Task ({
-            _id: idforSubTask,
-            subTaskEntry : [(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]
-        })
-        sub_Task.save();
-        idforSubTask++;
+     var myArray = sub_task;    
+    var index = myArray.findIndex((item)=>  (item.subTaskEntry[0] === (filterArr[filterArr.length-1])[0] & (item.subTaskEntry)[1] === (filterArr[filterArr.length-1])[1] &  (item.subTaskEntry)[5] === (filterArr[filterArr.length-1])[5] & (item.subTaskEntry)[2] !== (filterArr[filterArr.length-1])[2]));
+    console.log(index);    
+    Sub_Task.deleteOne({user_id : (sub_task[index]).user_id})
+    .then ((elem)=> {
+        console.log(elem)
+        
+    })
    //     console.log(datadump);
-    }
-
-// -----------Loop ------3 
-
-else{
-        console.log("loop3")
-        const sub_Task = new Sub_Task ({
-            _id: idforSubTask,
-            subTaskEntry : [(req.body["inputonLoad"][0])[0],(req.body["inputonLoad"][0])[1],(req.body["inputonLoad"][0])[4],(req.body["inputonLoad"][0])[2],(req.body["inputonLoad"][0])[3],((req.body["inputonLoad"][0])[5])]
-        })        
-        sub_Task.save();
-        idforSubTask++;
-}       
+    }    
 });
+}
 
 // fpop.push((printable));
 //console.log("fpop: " + printable)
@@ -406,7 +398,6 @@ const data = {
 } 
 
 res.render("taskrepository.ejs", data);
-}
 })
 .catch ((err)=> {
     console.log(err);
@@ -415,6 +406,7 @@ res.render("taskrepository.ejs", data);
 
 // Task reporistory page -- All unregistered tasks are visible here
 app.get("/taskrepository", (req,res)=>{
+    console.log(fName);
     // task creating variables
     var checkedTasks=[];var num=""; var numArr = [];var title = [];var currDate = [];var currTime = [];var taskDesc = [];var subTask = [];var taskSubT = [];var len = "";
     Task.find()
@@ -427,8 +419,8 @@ app.get("/taskrepository", (req,res)=>{
     if (sub_task != ""){
 
         sub_task.forEach(element =>{
-            
-            if (element.subTaskEntry[5] === null){
+
+            if (element.subTaskEntry[5] === "" & element.reg_user === false){
                 checkedTasks.push(element.subTaskEntry);
                 //console.log(element);
             }
@@ -445,7 +437,7 @@ app.get("/taskrepository", (req,res)=>{
     fName = undefined;
    }
  task.forEach(element => { 
-    if (element.loginInfo.emailAddress ===  undefined & emailAuth ===  undefined & element.loginInfo.password ===  undefined & passAuth ===  undefined ){
+    if (element.loginInfo == "" ){
     numArr.push(element);
     num = numArr.length;
     title.push(element.titleArr);
@@ -457,8 +449,6 @@ app.get("/taskrepository", (req,res)=>{
     len = element.subTaskCount;
     }
 });
-
-//console.log(req.body["emailAuth"]);
     const data={
         dir : __dirname,
         clickcount: num,
@@ -476,14 +466,13 @@ app.get("/taskrepository", (req,res)=>{
         firstname : fName,
         loginInfo: loginDB
     }
- //   console.log(data);
     res.render("taskrepository.ejs", (data));
 })
 .catch ((err)=>{
  console.log(err);
 });}
 else {
-        console.log(err);
+        console.log("Add first task");
         res.render("addtask.ejs");
     }
 });
@@ -494,26 +483,35 @@ app.get("/usertaskrepository", (req,res)=>{
   // task creating variables
   var checkedTasks=[];var num=""; var numArr = [];var title = [];var currDate = [];var currTime = [];var taskDesc = [];var subTask = [];var taskSubT = [];var len = "";
 
-    if (fs.readFileSync("tempTaskDB.txt", 'utf8')!= ""){
-        console.log("repo")
-        var datadump = JSON.parse(fs.readFileSync("tempTaskDB.txt", 'utf8')); 
-        if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
-             JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"].forEach(element =>{
-                if (element[5] === emailAuth){
-                    checkedTasks.push(element);
-                }
-                
-            });
-        }
-        else{
-            checkedTasks = ["","","","",""];
-            console.log("error")
-        }
-       if (fName === ""){
-        fName = undefined;
-       }
-    (datadump.newTask).forEach(element => {  
-        if (element.loginInfo.emailAddress === emailAuth & element.loginInfo.password === passAuth){
+     userTask.find()
+    .then ((task)=> {
+    if (task != ""){
+    
+    Sub_Task.find()
+    .then ((sub_task)=>{
+    if (sub_task != ""){
+
+        sub_task.forEach(element =>{
+        //    console.log(element.subTaskEntry[5] === emailAuth);
+            if (element.subTaskEntry[5] === emailAuth & element.reg_user === true){
+                checkedTasks.push(element.subTaskEntry);
+                //console.log(element);
+            }
+        });
+         
+   //console.log(checkedTasks["storedData"]);
+    }
+    else{
+        checkedTasks = ["","","","",""];
+        console.log("error")
+    }
+  
+   if (fName === ""){
+    fName = undefined;
+   }
+ task.forEach((element) => { 
+    element.loginInfo.forEach(elem => {
+        if (elem.emailAddress === emailAuth & elem.password === passAuth){
         numArr.push(element);
         num = numArr.length;
         title.push(element.titleArr);
@@ -524,7 +522,8 @@ app.get("/usertaskrepository", (req,res)=>{
         subTask.push(element.subTaskArr);
         len = element.subTaskCount;
         }
-        console.log(passAuth);
+       // console.log(passAuth);
+    });
     });
     
     const data={
@@ -544,14 +543,16 @@ app.get("/usertaskrepository", (req,res)=>{
             firstname : fName,
             loginInfo: loginDB
         }
-      //  console.log(data);
     res.render("usertaskrepository.ejs", (data));
-    }
-    else {
-        console.log("Empty file");
-        console.log(fs.readFileSync("tempTaskDB.txt", 'utf8'))
-        res.render("addtask.ejs");
-    }
+    })
+    .catch ((err)=>{
+        console.log(err);
+       });}
+       else {
+               console.log("Add first task");
+               res.render("addtask.ejs");
+           }
+       });
 });
 
 // Tasks set for current date should be visible here
@@ -559,26 +560,34 @@ app.get("/today", (req,res)=>{
 // task creating variables
 var checkedTasks=[];var num=""; var numArr = [];var title = [];var currDate = [];var currTime = [];var taskDesc = [];var subTask = [];var taskSubT = [];var len = "";
 
-    if (fs.readFileSync("tempTaskDB.txt", 'utf8')!= ""){
-        console.log("repo")
-        var datadump = JSON.parse(fs.readFileSync("tempTaskDB.txt", 'utf8')); 
-        if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
-            JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"].forEach(element =>{
-                if (element[5] === emailAuth){
-                    checkedTasks.push(element);
-                }
-
-            });
+     Task.find()
+    .then ((task)=> {
+    if (task != ""){
+    console.log("repo")
     
-        }
-        else{
-            checkedTasks = ["","","","",""];
-            console.log("error")
-        }
-        if (fName === ""){
-            fName = undefined;
-           }
-        (datadump.newTask).forEach(element => {  
+    Sub_Task.find()
+    .then ((sub_task)=>{
+    if (sub_task != ""){
+
+        sub_task.forEach(element =>{
+            
+            if (element.subTaskEntry[5] === "" & element.reg_user === true){
+                checkedTasks.push(element.subTaskEntry);
+                //console.log(element);
+            }
+        });
+         
+   //console.log(checkedTasks["storedData"]);
+    }
+    else{
+        checkedTasks = ["","","","",""];
+        console.log("error")
+    }
+  
+   if (fName === ""){
+    fName = undefined;
+   }
+ task.forEach(element => {  
             if (element.loginInfo.emailAddress === emailAuth & element.loginInfo.password === passAuth){
             numArr.push(element);
             num = numArr.length;
@@ -612,24 +621,49 @@ var checkedTasks=[];var num=""; var numArr = [];var title = [];var currDate = []
             }
     
         res.render("submit.ejs", (data));
-        }
-        else {
-            console.log("Empty file");
-            console.log(fs.readFileSync("tempTaskDB.txt", 'utf8'))
-            res.render("addtask.ejs");
-        }
+        })
+        .catch ((err)=>{
+        console.log(err);
+       });}
+       else {
+               console.log("Add first task");
+               res.render("addtask.ejs");
+           }
+       });
 });
 
 // Loads form for new task creation
 app.get("/addTask", (req,res)=>{
+    console.log(fName);
      res.render("addTask.ejs",{firstname : fName});
  });
 
 // Adds new task to the task repository
-app.post("/submit", (req,res)=>{
-    
+app.post("/submit", async(req,res)=>{
+  console.log(loginDB);
+  if (fName == undefined){
+    const count = await (Task.countDocuments({}))+100 ;
     const newTask = new Task({
-        _id: idCount, 
+        user_id: count, 
+        ip : ip,
+        titleArr : req.body["taskTitle"],
+        currDateArr:(req.body["taskDate"]),
+        currTimeArr: (req.body["taskTime"]),
+        taskDescArr: (req.body["taskDesc"]),
+        taskSubArr: (req.body["taskSub"]),
+        subTaskArr: (req.body["subtaskbox"]),
+        subTaskCount: req.body["subtaskbox"].length,
+        url: req.url,
+        today: dateviaAPI,
+        firstname : fName,
+        loginInfo: []
+    });
+    newTask.save();
+  }
+  else {
+    const usercount = await (userTask.countDocuments({}))+100 ;
+    const newuserTask = new userTask({
+        user_id: usercount, 
         ip : ip,
         titleArr : req.body["taskTitle"],
         currDateArr:(req.body["taskDate"]),
@@ -643,125 +677,135 @@ app.post("/submit", (req,res)=>{
         firstname : fName,
         loginInfo: loginDB
     });
-    newTask.save();
-    idCount++;
+    newuserTask.save();
+  }
+   console.log(fName);
     res.render("addTask.ejs", {msg: "Task created successfully.", firstname: fName});
 });
 
-app.get("/editTask/:id", (req,res) => {
-    console.log(req.params.id);
+app.get("/editTask/:id", async(req,res) => {
+    console.log(parseInt(100+parseInt(req.params.id)));
+    console.log(fName);
+
+    if (fName === "" || fName == undefined){
+     await Task.findOneAndDelete({$and:[{user_id: parseInt(100+parseInt(req.params.id))},{loginInfo:{$eq: []}}]})
+    .then ((ack)=> {
+        console.log(ack)})
+    .catch ((err)=>{
+        console.log(err);
+    })
+    }
+    else 
+        {
+            await userTask.findOneAndDelete({$and:[{user_id: parseInt(100+parseInt(req.params.id))},{loginInfo:{$ne: []}}]})
+    .then ((ack)=> {
+        console.log(ack)})
+    .catch ((err)=>{
+        console.log(err);
+    })
+    }
     
-        var datadump = [];
-        var checkedTasks = [];
-      if (fs.readFileSync("tempTaskDB.txt", 'utf8') != ""){   
-        datadump = JSON.parse(fs.readFileSync("tempTaskDB.txt", 'utf8'))["newTask"];
-
-        if (datadump[parseInt(req.params.id)].loginInfo == "") {
-        datadump.splice(parseInt(req.params.id),1) ;
-        //console.log(datadump);
-        fs.writeFile("tempTaskDB.txt","",'utf8', (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-        const data={
-            newTask: datadump
-          }
-        fs.writeFile("tempTaskDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-
-    if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
-        checkedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-        var revisedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-        console.log(revisedTasks.length);
-       for (var i=0; i< revisedTasks.length; i++){ 
-       var taskID =  checkedTasks.findIndex(element => element[5] === null & element[0] === parseInt(req.params.id) )
-       if (taskID !== -1){
-       checkedTasks.splice(taskID,1);
+    if (await Task.find({$and:[{user_id:100+parseInt(req.params.id)},{loginInfo:[]}]}) == ""){
+        console.log("X")
+    for (var i= parseInt(req.params.id); i< await Task.countDocuments({}); i++){
+    await Task.findOneAndUpdate({user_id:100+i+1},{user_id:100+i});
+    }
+    var my_count = await Sub_Task.countDocuments({});
+    for (var i = 0; i < my_count; i++){
+        console.log(my_count + "____");
+        await Sub_Task.findOneAndDelete({$and:[{subTaskEntry : req.params.id} , {reg_user : false}]})
+       .then (async(ack) =>{
+        my_count = await Sub_Task.countDocuments({});
+        if (ack != null){
+            if ( ack.reg_user === false){    
+            for (var i= ack.user_id; i< await Task.countDocuments({})+await userTask.countDocuments({}); i++){ 
+            await Sub_Task.findOneAndUpdate({user_id:i+1},{user_id:i})
+            .then ((ack)=> {
+                console.log(ack);
+            });
+           }
         }
-       } 
-      checkedTasks.forEach(element => {
-       if (element[0] > parseInt(req.params.id)){
-        element[0] = parseInt(element[0])-1;
-        var myStr = element[1].substring((element[1]).length,(element[1]).length-1);
-        element[1] = `checkbox-${element[0]}-${myStr}`;
-        console.log(element[1]);
+    }
+    });
+    }
+           Sub_Task.find()
+           .then ((sub_task)=>{
+           sub_task.forEach(async (element) => {
+               if (element.subTaskEntry[0] > parseInt(req.params.id) & element.reg_user === false){
+                var myStr = element.subTaskEntry[1].substring((element.subTaskEntry[1]).length,(element.subTaskEntry[1]).length-1);
+                console.log("r"+element.subTaskEntry[0])
+           await Sub_Task.updateOne({$and: [{subTaskEntry : element.subTaskEntry[0], reg_user: false}]},{$set: {"subTaskEntry.$[elem]": `${parseInt(element.subTaskEntry[0])-1}`}},{arrayFilters:[{"elem": element.subTaskEntry[0]}]})
+            .then (()=>{
+               console.log("Re-aligned checkbox sequence and user ID after delete operation")
+           })
+           .catch((err)=>{
+               console.log(err)
+           });
+   
+           await Sub_Task.updateOne({$and: [{subTaskEntry : `${parseInt(element.subTaskEntry[0])-1}`, reg_user: false}]},{$set: {"subTaskEntry.$[elem]": `checkbox-${parseInt(element.subTaskEntry[0])-1}-${myStr}`}},{arrayFilters:[{"elem": element.subTaskEntry[1]}]})
+           .then (()=>{
+               console.log("Re-aligned checkbox id after delete operation")
+           })
+           .catch((err)=>{
+               console.log(err)
+            });
+        }
+        });
+        })
+           .catch ((err)=>{
+           console.log(err);
+           });
+       }
+
+    if (await userTask.find({$and:[{user_id:100+parseInt(req.params.id)},{loginInfo:{$ne:[]}}]}) == ""){
+        console.log("Y")
+    for (var i= parseInt(req.params.id); i< await userTask.countDocuments({}); i++){
+    await userTask.findOneAndUpdate({user_id:100+i+1},{user_id:100+i});
+    }
+    
+    for (var i = 0; i < await Sub_Task.countDocuments({}); i++){
+        await Sub_Task.findOneAndDelete({$and:[{subTaskEntry : req.params.id} , {reg_user : true}]})
+        .then (async(ack) =>{
+            if (ack != null && ack.reg_user === true){    
+                for (var i= ack.user_id; i< await Task.countDocuments({})+await userTask.countDocuments({}); i++){ 
+                await Sub_Task.findOneAndUpdate({user_id:i+1},{user_id:i})
+                .then ((ack)=> {
+                    console.log(ack);
+                });
+               }
+            }
+            })
+            }
+               Sub_Task.find()
+                .then ((sub_task)=>{
+                sub_task.forEach(async(element) => {
+                    if (element.subTaskEntry[0] > parseInt(req.params.id) & element.reg_user === true){
+                    var myStr = element.subTaskEntry[1].substring((element.subTaskEntry[1]).length,(element.subTaskEntry[1]).length-1);
+                console.log("s")
+                await Sub_Task.updateOne({$and: [{subTaskEntry : element.subTaskEntry[0], reg_user: true}]},{$set: {"subTaskEntry.$[elem]": `${parseInt(element.subTaskEntry[0])-1}`}},{arrayFilters:[{"elem": element.subTaskEntry[0]}]})
+                .then (()=>{
+                    console.log("Re-aligned checkbox sequence and user ID after delete operation")
+                })
+                .catch((err)=>{
+                    console.log(err)
+                });
+
+                await Sub_Task.updateOne({$and: [{subTaskEntry : `${parseInt(element.subTaskEntry[0])-1}`, reg_user: true}]},{$set: {"subTaskEntry.$[elem]": `checkbox-${parseInt(element.subTaskEntry[0])-1}-${myStr}`}},{arrayFilters:[{"elem": element.subTaskEntry[1]}]})
+                .then (()=>{
+                    console.log("Re-aligned checkbox id after delete operation")
+                })
+                .catch((err)=>{
+                    console.log(err)
+                });
+                }
+                });
+                })
+            .catch ((err)=>{
+            console.log(err);
+            });
+
         }
         
-    });
-
-        fs.writeFile("tempprogDB.txt","",'utf8', (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-        const data={
-            storedData: checkedTasks
-          }
-          
-        fs.writeFile("tempprogDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-    }
-}
-
-else{
-    var count = 0
-    datadump.forEach(element => {
-      if  (element.loginInfo.emailAddress === emailAuth & element.loginInfo.password === passAuth & parseInt(req.params.id)===count) {
-       datadump.splice (datadump.findIndex(item => item === element),1);
-       console.log(element)
-      }
-      count++
-    });
-    fs.writeFile("tempTaskDB.txt","",'utf8', (err) => {
-        if (err) throw err;
-        console.log('The file has been saved!');
-    });
-    const data={
-        newTask: datadump
-      }
-    fs.writeFile("tempTaskDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-        if (err) throw err;
-        console.log('The file has been saved!');
-    });
-
-    if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
-        checkedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-        var revisedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-       for (var i=0; i< revisedTasks.length; i++){
-       var taskID =  checkedTasks.findIndex(element => element[5] === emailAuth & parseInt(element[0]) === parseInt(req.params.id) )
-       if (taskID !== -1){
-       checkedTasks.splice(taskID,1);
-        }
-       } 
-      checkedTasks.forEach(element => {
-       if (element[0] > parseInt(req.params.id)){
-        element[0] = parseInt(element[0])-1;
-        var myStr = element[1].substring((element[1]).length,(element[1]).length-1);
-        element[1] = `checkbox-${element[0]}-${myStr}`;
-        console.log(element[1]);
-        }
-        
-    });
-
-        fs.writeFile("tempprogDB.txt","",'utf8', (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-        const data={
-            storedData: checkedTasks
-          }
-          
-        fs.writeFile("tempprogDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-    }
-}
-
-}
     if (fName === undefined){
         res.redirect("/taskrepository");    
         }
@@ -772,141 +816,57 @@ else{
 
 app.post("/updateTask", (req,res) => {
     
-    var taskCn = [];
-    var datadump = [];
+    if (fName != undefined){
+        console.log("User")
+    userTask.find({})
+    .then(async(task)=>{
+    var indexedArr = task.filter(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id);
+    if (indexedArr.length === 1){
+        var index =  task.findIndex(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id);
+        var my_subTaskArr = await userTask.find({user_id : 100+index}, {subTaskArr: 1, _id:0});
+       var prev_subTaskArr = my_subTaskArr[index].subTaskArr.filter(e => e != "") ;
+       await userTask.updateOne({user_id : 100+index},  {titleArr : req.body.taskTitle, currDateArr : req.body.taskDate, currTimeArr : req.body.taskTime, taskDescArr : req.body.taskDesc, taskSubArr : req.body.taskSub, subTaskArr: req.body.subTask})
+        .then (e => {
+            console.log(e);
+        })
+        var update_subTaskArr = req.body.subTask.slice(0,(prev_subTaskArr.length)); 
+       if (prev_subTaskArr.toString() != update_subTaskArr.toString()){
+       console.log("different")
+       await Sub_Task.deleteMany({subTaskEntry : `${index}`})
+       .then (e => {
+         console.log(e);
+       })
+     }
+    }
+    })
+    res.redirect("/usertaskrepository");
+    }
+    else {
+        console.log("Guest")
+    Task.find({})
+    .then(async(task)=>{
+    var indexedArr = task.filter(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id);
+    if (indexedArr.length === 1){
+        var index =  task.findIndex(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id);
+        var my_subTaskArr = await Task.find({user_id : 100+index}, {subTaskArr: 1, _id:0});
+       var prev_subTaskArr = my_subTaskArr[index].subTaskArr.filter(e => e != "") ;
+       await Task.updateOne({user_id : 100+index},  {titleArr : req.body.taskTitle, currDateArr : req.body.taskDate, currTimeArr : req.body.taskTime, taskDescArr : req.body.taskDesc, taskSubArr : req.body.taskSub, subTaskArr: req.body.subTask})
+        .then (e => {
+            console.log(e);
+        })
+        var update_subTaskArr = req.body.subTask.slice(0,(prev_subTaskArr.length)); 
+       if (prev_subTaskArr.toString() != update_subTaskArr.toString()){
+       console.log("different")
+       await Sub_Task.deleteMany({subTaskEntry : `${index}`})
+       .then (e => {
+         console.log(e);
+       })
+     }
+    }
+    })
+    res.redirect("/taskrepository");
+    }
    
-  if (fs.readFileSync("tempTaskDB.txt", 'utf8') != ""){   
-    datadump = JSON.parse(fs.readFileSync("tempTaskDB.txt", 'utf8'))["newTask"];
-
-      var indexedArr =  datadump.filter(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id & element.loginInfo == "");
-      if (indexedArr.length === 1){
-            var index =  datadump.findIndex(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id & element.loginInfo == "");
-            console.log(index);
-            if (req.body.taskTitle) {datadump[index].titleArr = req.body.taskTitle}
-            if (req.body.taskDate) {datadump[index].currDateArr = req.body.taskDate}
-            if (req.body.taskTime) {datadump[index].currTimeArr = req.body.taskTime}
-            if (req.body.taskDescArr) {datadump[index].taskDescArr = req.body.taskDescArr}
-            if (req.body.taskSub) {datadump[index].taskSubArr = req.body.taskSub}
-            for (var i=0; i<10; i++){
-                if((req.body.subTask)[i] !== (datadump[index].subTaskArr)[i]) {
-                    (datadump[index].subTaskArr)[i] = (req.body.subTask)[i]
-                     taskCn.push(i); 
-                }
-            }
-          
-            fs.writeFile("tempTaskDB.txt","",'utf8', (err) => {
-                if (err) throw err;
-                console.log('The file has been saved!');
-            });
-            const data={
-                newTask: datadump
-              }
-            fs.writeFile("tempTaskDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-                if (err) throw err;
-                console.log('The file has been saved!');
-            });
-            
-            if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
-               var checkedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-                var revisedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-               for (var i=0; i< revisedTasks.length; i++){ 
-                    for (var j =0; j < taskCn.length; j++){
-               var taskID =  checkedTasks.findIndex(element => element[5] === null & (element[0]) === req.body.taskNum & element[1] === `checkbox-${req.body.taskNum}-${taskCn[j]}`)
-            
-               if (taskID !== -1){
-               checkedTasks.splice(taskID,1);
-                }
-            }
-            }
-            fs.writeFile("tempprogDB.txt","",'utf8', (err) => {
-                if (err) throw err;
-                console.log('The file has been saved!');
-            });
-            const data={
-                storedData: checkedTasks
-              }
-              
-            fs.writeFile("tempprogDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-                if (err) throw err;
-                console.log('The file has been saved!');
-            });
-        }
-
-            res.redirect("/taskrepository");
-        }
-        else{
-            var indexedArr =  datadump.filter(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id & element.loginInfo.emailAddress == emailAuth);
-      if (indexedArr.length === 1){
-            var index =  datadump.findIndex(element => element.titleArr+element.taskSubArr+element.taskDescArr+element.currDateArr+element.currTimeArr+element.subTaskArr  === req.body.id & element.loginInfo.emailAddress == emailAuth);
-            console.log(index);
-            if (req.body.taskTitle) {datadump[index].titleArr = req.body.taskTitle}
-            if (req.body.taskDate) {datadump[index].currDateArr = req.body.taskDate}
-            if (req.body.taskTime) {datadump[index].currTimeArr = req.body.taskTime}
-            if (req.body.taskDescArr) {datadump[index].taskDescArr = req.body.taskDescArr}
-            if (req.body.taskSub) {datadump[index].taskSubArr = req.body.taskSub}
-            for (var i=0; i<10; i++){
-                if((req.body.subTask)[i] !== (datadump[index].subTaskArr)[i]) {
-                    (datadump[index].subTaskArr)[i] = (req.body.subTask)[i] ;
-                    taskCn.push(i); 
-                }
-            }
-           
-            fs.writeFile("tempTaskDB.txt","",'utf8', (err) => {
-                if (err) throw err;
-                console.log('The file has been saved!');
-            });
-            const data={
-                newTask: datadump
-              }
-            fs.writeFile("tempTaskDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-                if (err) throw err;
-                console.log('The file has been saved!');
-            });
-
-            if (fs.readFileSync("tempprogDB.txt", 'utf8') != ""){
-                var checkedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-                 var revisedTasks = JSON.parse(fs.readFileSync("tempprogDB.txt", 'utf8'))["storedData"]; 
-                for (var i=0; i< revisedTasks.length; i++){ 
-                     for (var j =0; j < taskCn.length; j++){
-                var taskID =  checkedTasks.findIndex(element => element[5] === emailAuth & (element[0]) === req.body.taskNum & element[1] === `checkbox-${req.body.taskNum}-${taskCn[j]}`)
-             
-                if (taskID !== -1){
-                checkedTasks.splice(taskID,1);
-                 }
-             }
-             }
-             fs.writeFile("tempprogDB.txt","",'utf8', (err) => {
-                 if (err) throw err;
-                 console.log('The file has been saved!');
-             });
-             const data={
-                 storedData: checkedTasks
-               }
-               
-             fs.writeFile("tempprogDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-                 if (err) throw err;
-                 console.log('The file has been saved!');
-             });
-         }
-
-            res.redirect("/usertaskrepository");
-        }
-        }
-      /*   datadump.splice(parseInt(req.params.id),1) ;
-    //console.log(datadump);
-    fs.writeFile("tempTaskDB.txt","",'utf8', (err) => {
-        if (err) throw err;
-        console.log('The file has been saved!');
-    });
-    const data={
-        newTask: datadump
-      }
-    fs.writeFile("tempTaskDB.txt",JSON.stringify(data,null,2),'utf8', (err) => {
-        if (err) throw err;
-        console.log('The file has been saved!');
-    });*/
-   // res.redirect("/taskrepository");
-}
 });
 
 // selects local port to run server 

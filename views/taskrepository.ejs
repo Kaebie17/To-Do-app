@@ -17,7 +17,7 @@
                         <form action="/checkbox-form" method="post">
                             <p id="label-p"> 
                                 <label id="sub-task-id-<%= i %>-<%= j %>" for="sub-task-box-<%= j %>" class="<% if (locals.inputfromDB){ inputfromDB.forEach(element => { if ((element)[1] === "checkbox-"+i+"-"+j) { %> <%-(element)[4] %> <%} }) }%>" >
-                                    <input id="checkbox-<%= i %>-<%= j %>"  type="checkbox" name="sub-task-box-<%= j %>" onclick=' $("#sub-task-id-<%= i %>-<%= j %>").toggleClass("strikethrough");const taskProgress = new Progress("<%= i %>"); $("#progress-bar<%=i%>").css("width", taskProgress["funcInstance<%= i %>"](event, "<%= i %>" )); store(event,"<%= i %>","<%= j %>",newWidth,$("#sub-task-id-<%= i %>-<%= j %>").attr("class"), check(event));' <%if (locals.inputfromDB){ inputfromDB.forEach(element => { if ((element)[1] === "checkbox-"+i+"-"+j) {%><%= (element)[2] %><% } }) }%> > <%=subTaskArr[i][j] %>
+                                    <input id="checkbox-<%= i %>-<%= j %>"  type="checkbox" name="sub-task-box-<%= j %>" onclick=' $("#sub-task-id-<%= i %>-<%= j %>").toggleClass("strikethrough");const taskProgress = new Progress("<%= i %>"); $("#progress-bar<%=i%>").css("width", taskProgress["funcInstance<%= i %>"](event, "<%= i %>" )); store(event,"<%= i %>","<%= j %>",newWidth,$("#sub-task-id-<%= i %>-<%= j %>").attr("class"), check(event),"<%- loginInfo.emailAddress %>");' <%if (locals.inputfromDB){ inputfromDB.forEach(element => { if ((element)[1] === "checkbox-"+i+"-"+j) {%><%= (element)[2] %><% } }) }%> > <%=subTaskArr[i][j] %>
                                 </label>
                             </p>
                         </form>
@@ -128,14 +128,14 @@ function check(e){
     }
 }
 
-function store(event,i,j, barWidth,labelCSS,checkState){
+function store(event,i,j, barWidth,labelCSS,checkState,email){
        
        outputforDB = []; 
   idArray = $(($("#removecover-"+ i)).attr("href")).children("form").children("p#label-p").children("label").children("input");
 
   if ($(idArray[j]).attr("id") === $(event.target).attr("id")) {    
-    outputforDB.push([i,$(idArray[j]).attr("id"),barWidth,labelCSS,checkState,undefined]);
-   // console.log(outputforDB);
+    outputforDB.push([i,$(idArray[j]).attr("id"),barWidth,labelCSS,checkState,email]);
+   console.log(outputforDB);
 }
     const data = {
        inputonLoad: outputforDB 

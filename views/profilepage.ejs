@@ -1,5 +1,5 @@
 <%- include("partials/header.ejs") %>
-<% if (locals.userexists === undefined) {%>
+<% if (locals.myCount > 0) {%>
 <img src="assets/whisper-img.jpg" alt="" class="profileImg">
 <form action="" method="get" class="profile">
     <span>
@@ -23,7 +23,7 @@
     <input type="submit" name="updateprofile" value="Update Profile" disabled>
 </form>    
     <button style="position: relative; left: 88%;" onclick='document.location.href = "/login";'>Go To Login Page</button>
-<% } else {%>
+<% } else if (locals.userexists) {%>
 <h5 class="userexists"><%= userexists + " Back to" %>&nbsp<a href="/" style="text-decoration: underline !important;"> home page.</a> </h5>
 <% } %>
 
