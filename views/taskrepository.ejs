@@ -1,40 +1,41 @@
 <%- include("partials/header.ejs") %>
-
 <div class="todo-container">
+
     <% if (locals.clickcount ) {%>
         <% var j=0; %>
         <% for(var i = 0 ; i < clickcount; i++){ %>
                 <div>
                     <div id="sticky-cover-<%= [i] %>" class="taskAttr-todo">
                         <p class="closeAttrDiv"><a href="#sticky-cover-restore-<%= [i] %>">📌</a></p>
-                        <p class="firstAttr-todo"><strong><%= taskSubArr[i] %></strong></p>
-                        <p><%= taskDescArr[i] %></p><br>
+                        <p class="firstAttr-todo"><strong><%= taskSubArr[i] %></strong>&nbsp<a id='<%- taskIDArr[i] %>' data-bs-toggle="modal" href="#exampleModal" onclick="update(event.target , 'Update the task sub_title.' , '<%=taskSubArr[i]%>')">✏️</a></p>
+                        <p><%= taskDescArr[i] %>&nbsp<a id='<%- taskIDArr[i] %>' data-bs-toggle="modal" href="#exampleModal" onclick="update(event.target , 'Update the task description.' , '<%=taskDescArr[i]%>')">✏️</a></p><br>
                         <% if (locals.subTaskArr) {%>
                         <p><strong>Sub-Tasks-</strong></p>
-                        <% for(var j = 0 ; j < subTaskCount; j++){ %>  
+                        <% for(var j = 0 ; j < subTaskCount[i]; j++){ %>  
                         <p>
                            <% if (subTaskArr[i][j] !== '') {%>
                         <form action="/checkbox-form" method="post">
                             <p id="label-p"> 
                                 <label id="sub-task-id-<%= i %>-<%= j %>" for="sub-task-box-<%= j %>" class="<% if (locals.inputfromDB){ inputfromDB.forEach(element => { if ((element)[1] === "checkbox-"+i+"-"+j) { %> <%-(element)[4] %> <%} }) }%>" >
                                     <input id="checkbox-<%= i %>-<%= j %>"  type="checkbox" name="sub-task-box-<%= j %>" onclick=' $("#sub-task-id-<%= i %>-<%= j %>").toggleClass("strikethrough");const taskProgress = new Progress("<%= i %>"); $("#progress-bar<%=i%>").css("width", taskProgress["funcInstance<%= i %>"](event, "<%= i %>" )); store(event,"<%= i %>","<%= j %>",newWidth,$("#sub-task-id-<%= i %>-<%= j %>").attr("class"), check(event),"<%- loginInfo.emailAddress %>");' <%if (locals.inputfromDB){ inputfromDB.forEach(element => { if ((element)[1] === "checkbox-"+i+"-"+j) {%><%= (element)[2] %><% } }) }%> > <%=subTaskArr[i][j] %>
-                                </label>
+                                <a id='<%- taskIDArr[i] +','+ subTaskIDArr[i][j]  %>' data-bs-toggle="modal" href="#exampleModal" onclick="update(event.target , 'Update the selected sub_tasks.' , '<%=subTaskArr[i][j]%>')">✏️</a><a id='<%- taskIDArr[i] +','+ subTaskIDArr[i][j] %>' onclick="var id = event.target.id;console.log(id); window.location.href = `/delete/${id}` ; event.target.classList.remove(id);  if ('<%-subTaskIDArr[i].length%>'==1){alert('Every task should have at least one subtask! Please remove the task to complete this action.')}">❌</a>
+                            </label>
                             </p>
                         </form>
                          </p>
                          <% } %>
                          <% } %>
                          <% } %>
+                         <a style="text-align: center;" id='<%- taskIDArr[i] +','+ subTaskIDArr[i][j]  %>' data-bs-toggle="modal" href="#exampleModal" onclick="update(event.target , 'Update the title of the task.' , '<%=titleArr[i]%>')">➕</a>
                     </div>
+                    <%- include("partials/editTaskModal.ejs") %> 
                     <img src="assets/sticky-note.jpg" alt="">
-                    <h4><%= titleArr[i] %></h4>
+                    <span><h4><%= titleArr[i] %></h4>&nbsp<a id='<%- taskIDArr[i] %>' data-bs-toggle="modal" href="#exampleModal" onclick="update(event.target , 'Update the title of the task.' , '<%=titleArr[i]%>')">✏️</a><a id='<%- taskIDArr[i] %>' onclick="var id = event.target.id;console.log(id); window.location.href = `/delete/${id}` ; event.target.classList.remove(id);">❌</a></span>
                     <p><%= currDateArr[i] %> <%= currTimeArr[i] %> hrs</p>
                     <p class="removecover"><a href="#sticky-cover-<%= [i] %>" id="removecover-<%= [i] %>" onclick="event;">📌</a></p>
-                    <p class="editIcon"><a id="editTask-<%= [i] %>" data-bs-toggle="modal" href="#exampleModal" onclick="var document = ($(event.target)[0]).ownerDocument; document.getElementById('exampleModal').classList.add('<%- i %>'); console.log(`<%-subTaskArr[i].filter(element => element !== '')%>`)  ;update('<%- i %>','<%-titleArr[ i] %>','<%-currDateArr[ i] %>','<%-currTimeArr[ i] %>','<%-taskSubArr[ i] %>','<%-taskDescArr[ i] %>','<%-subTaskArr[i][0]%>','<%-subTaskArr[i][1]%>','<%-subTaskArr[i][2]%>','<%-subTaskArr[i][3]%>','<%-subTaskArr[i][4]%>','<%-subTaskArr[i][5]%>','<%-subTaskArr[i][6]%>','<%-subTaskArr[i][7]%>','<%-subTaskArr[i][8]%>','<%-subTaskArr[i][9]%>')">📝</a></p>
-                    <%- include("partials/editTaskModal.ejs") %>
                     <h5>Progress:</h5>
                     <div id="maximum-width" class="progress" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated progress-status"  id="progress-bar<%=i%>" <% /* eslint-disable css-propertyvalueexpected */ %> style = "width :  <% if (locals.inputfromDB){ var w = 0 ; var sameBar = []; var sameBarTasks = [] ; for (var c = 0; c < inputfromDB.length; c++){if (parseFloat((inputfromDB[c])[0])===i & (inputfromDB[c])[4] === "strikethrough") { sameBar.push(inputfromDB[c]);}}; for (var d = 0; d < subTaskCount; d++) { if (((subTaskArr[i])[d]) != "") { sameBarTasks.push((subTaskArr[i])[d]);} }; w = sameBar.length*(182.938/sameBarTasks.length);%> <%- w+"px" %> <% } else {%> 0px <% } %>";></div>
+                            <div class="progress-bar progress-bar-striped progress-bar-animated progress-status"  id="progress-bar<%=i%>" <% /* eslint-disable css-propertyvalueexpected */ %> style = "width :  <% if (locals.inputfromDB){ var w = 0 ; var sameBar = []; var sameBarTasks = [] ; for (var c = 0; c < inputfromDB.length; c++){if (parseFloat((inputfromDB[c])[0])===i & (inputfromDB[c])[4] === "strikethrough") { sameBar.push(inputfromDB[c]);}}; for (var d = 0; d < subTaskCount[i]; d++) { if (((subTaskArr[i])[d]) != "") { sameBarTasks.push((subTaskArr[i])[d]);} }; w = sameBar.length*(182.938/sameBarTasks.length);%> <%- w+"px" %> <% } else {%> 0px <% } %>";></div>
                     </div>
                 </div>
             <% } %>    
@@ -46,32 +47,26 @@
 
      var i = "";
      var clicks = {};
-     clicks[i] = [];
+     clicks[i] = [];   
     
-function update(id,title,date,time,subtitle,description,subtasks0,subtasks1,subtasks2,subtasks3,subtasks4,subtasks5,subtasks6,subtasks7,subtasks8,subtasks9){
-    response = [subtasks0,subtasks1,subtasks2,subtasks3,subtasks4,subtasks5,subtasks6,subtasks7,subtasks8,subtasks9];
-     const exampleModal = document.getElementById('exampleModal');
-     console.log(response);
+
+function update(evt, title, val){
+   
+    const exampleModal = document.getElementById('exampleModal');
+    
      // If necessary, you could initiate an Ajax request here
     // and then do the updating in a callback.
 
     // Update the modal's content.
-   // const modalTitle = exampleModal.querySelector('.modal-title') 
-     exampleModal.querySelector('#idTask').value =  title+subtitle+description+date+time+response ;
-     exampleModal.querySelector('#taskNum').value =  id;
-     exampleModal.querySelector('#taskTitle').value =  title;
-     exampleModal.querySelector('#taskSub').value = subtitle;
-     exampleModal.querySelector('#taskDesc').value = description; 
-     exampleModal.querySelector('#taskDate').value = date;
-     exampleModal.querySelector('#taskTime').value = time;
-     var my_subtask = [];
-     for (var i = 0; i < 10; i++){
-     my_subtask.push(`#subT-${i}`);
+     exampleModal.querySelector('.modal-title').innerHTML = title;
+    
+     exampleModal.querySelector('#editVal').value =  val;
+
+     exampleModal.querySelector('#modal_button').classList.add(evt.id) ;
+
+     exampleModal.querySelector('#headerID').value =  (title.split(" ")[title.split(" ").length-1].split("."))[0];
+     
     }
-    for (var i = 1; i <= 10; i++){
-        exampleModal.querySelector(`#subT-${i}`).value = response[i-1] ;
-       }
-}
 
 
 

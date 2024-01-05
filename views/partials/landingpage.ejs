@@ -16,6 +16,7 @@
             <p><input type="password" name="password" placeholder="Pick a password" size="46%" required></p>
             <p><input type="tel" name="mobile" placeholder="Your mobile number" size="46%"></p>
             <p><input type="submit" name="submit"></p>
+            <%if (locals.opMsg){  %> <%- opMsg %> <% } %>
         </form>
     </div>
     

@@ -1,24 +1,24 @@
 <%- include("partials/header.ejs") %>
-<% if (locals.myCount > 0) {%>
+<% if (locals.firstname != "") {%>
 <img src="assets/whisper-img.jpg" alt="" class="profileImg">
 <form action="" method="get" class="profile">
     <span>
     <label for="fname">First Name</label>
-    <input type="text" name="fName" value="<%= regUser.firstname %>" disabled></span>
+    <input type="text" name="fName" value="<%= firstname %>" disabled></span>
     <span>
     <label for="lname">Last Name</label>
-    <input type="text" name="lName" value="<%= regUser.lastname %>" disabled></span>
+    <input type="text" name="lName" value="<%= lastname %>" disabled></span>
     <span>
     <label for="lname">Email Address</label>
-    <input type="text" name="email" value="<%= regUser.emailAddress %>" disabled></span>
+    <input type="text" name="email" value="<%= emailAddress %>" disabled></span>
     <span>
     <label for="pass">Password</label>
-    <input type="password" name="pass" value="<%= regUser.password %>" disabled></span>
+    <input type="password" name="pass" value="<%= password %>" disabled></span>
     
     <a href="#">Change Password</a>
     <span>
-    <label for="pass">Mobile</label>
-    <input type="number" name="mobilenum" value="<%= regUser.mobileNumber %>" disabled></span>
+    <label for="mobilenum">Mobile</label>
+    <input type="number" name="mobilenum" value="<%= mobileNumber %>" disabled></span>
     
     <input type="submit" name="updateprofile" value="Update Profile" disabled>
 </form>    
